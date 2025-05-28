@@ -81,7 +81,7 @@
         android:visibility="visible"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/youSearch"
+        app:layout_constraintTop_toBottomOf="@+id/textInputLayout"
         tools:backgroundTint="?attr/colorPrimaryVariant" />
 
     <com.google.android.material.button.MaterialButton
@@ -118,18 +118,7 @@
         app:layout_constraintTop_toBottomOf="@+id/filter_by_change_percent_24Hr"
         tools:listitem="@layout/coin_item" />
 
-    <TextView
-        android:id="@+id/youSearch"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="44dp"
-        android:layout_marginTop="23dp"
-        android:text="@string/you_search"
-        android:textAppearance="@style/Text.SemiBold.16"
-        android:textColor="?attr/colorOnBackground"
-        android:visibility="gone"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/textInputLayout" />
+
 
     <TextView
         android:id="@+id/network_error_tv"
@@ -184,6 +173,6 @@
         android:id="@+id/vertical_chain"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        app:constraint_referenced_ids="textInputLayout,youSearch,filter_by_change_percent_24Hr,market_review_recyclerview"
+        app:constraint_referenced_ids="textInputLayout,filter_by_change_percent_24Hr,market_review_recyclerview"
         app:layout_constraintVertical_chainStyle="packed" />
 </androidx.constraintlayout.widget.ConstraintLayout>

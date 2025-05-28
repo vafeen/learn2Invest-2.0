@@ -99,8 +99,6 @@ internal class MarketReviewFragment : BaseResFragment() {
                         searchEditText.text.clear()
                     }
 
-                    // Управление элементами поиска
-                    youSearch.isVisible = state.searchRequest.isBlank() && state.isSearch
                     cancelTV.isVisible = state.isSearch
                     filterByPrice.isVisible = !state.isSearch
                     filterByMarketcap.isVisible = !state.isSearch
