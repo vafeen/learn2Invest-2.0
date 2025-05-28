@@ -15,7 +15,13 @@ internal interface CoinAPIService {
 
     // Получение данных о всех активах на рынке
     @GET(RetrofitLinks.API_MARKET_REVIEW)
-    suspend fun getMarketReview(): APIWrapper<List<CoinReviewResponse>>
+    suspend fun getMarketReview(
+        @Query("pageNumber") pageNumber: Int,
+        @Query("pageSize") pageSize: Int,
+        @Query("sortBy") sortBy: String,
+        @Query("sortOrder") sortOrder: String,
+        @Query("search") search: String,
+    ): APIWrapper<List<CoinReviewResponse>>
 
     // Получение истории изменения курса конкретного актива
     @GET(RetrofitLinks.API_HISTORY)
@@ -31,4 +37,13 @@ internal interface CoinAPIService {
     suspend fun getCoinReview(
         @Path("id") id: String
     ): APIWrapper<AugmentedCoinReviewResponse>
+
+    companion object {
+        const val SORT_BY_MARKET_CAP = "marketCap"
+        const val SORT_BY_PRICE = "price"
+        const val SORT_BY_CHANGE_PERCENT_24_H = "change"
+
+        const val SORT_ORDER_ASC = "asc"
+        const val SORT_ORDER_DESC = "desc"
+    }
 }

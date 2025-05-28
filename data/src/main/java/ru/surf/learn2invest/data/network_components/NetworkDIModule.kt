@@ -12,14 +12,19 @@ import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import ru.surf.learn2invest.data.network_components.paging.NetworkPagedRepositoryImpl
 import ru.surf.learn2invest.data.services.coin_api_service.CoinAPIService
 import ru.surf.learn2invest.data.services.coin_api_service.RetrofitLinks
+import ru.surf.learn2invest.domain.network.NetworkPagedRepository
 import ru.surf.learn2invest.domain.network.NetworkRepository
 
 
 @Module
 @InstallIn(ActivityRetainedComponent::class)
 internal object NetworkDIModule {
+    @Provides
+    fun provideNetworkPagedRepository(impl: NetworkPagedRepositoryImpl): NetworkPagedRepository =
+        impl
 
     @Provides
     fun provideImageLoader(@ApplicationContext context: Context): ImageLoader =

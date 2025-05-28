@@ -2,18 +2,26 @@ package ru.surf.learn2invest.presentation.ui.components.screens.fragments.market
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.paging.cachedIn
 import androidx.recyclerview.widget.RecyclerView.NO_POSITION
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
-import ru.surf.learn2invest.domain.database.usecase.ClearSearchedCoinUseCase
-import ru.surf.learn2invest.domain.database.usecase.GetAllSearchedCoinUseCase
-import ru.surf.learn2invest.domain.database.usecase.InsertSearchedCoinUseCase
+import kotlinx.coroutines.isActive
 import ru.surf.learn2invest.domain.domain_models.CoinReview
 import ru.surf.learn2invest.domain.network.ResponseResult
 import ru.surf.learn2invest.domain.network.usecase.GetCoinReviewUseCase
-import ru.surf.learn2invest.domain.network.usecase.GetMarketReviewUseCase
+import ru.surf.learn2invest.domain.network.usecase.GetPagedMarketReviewSortedByChangePercent24hUseCase
+import ru.surf.learn2invest.domain.network.usecase.GetPagedMarketReviewSortedByMarketCapUseCase
+import ru.surf.learn2invest.domain.network.usecase.GetPagedMarketReviewSortedByPriceAscUseCase
+import ru.surf.learn2invest.domain.network.usecase.GetPagedMarketReviewSortedByPriceDescUseCase
+import ru.surf.learn2invest.domain.network.usecase.base.GetPagedMarketReviewUseCase
 import ru.surf.learn2invest.domain.toCoinReview
 import ru.surf.learn2invest.domain.utils.launchIO
 import javax.inject.Inject
@@ -30,18 +38,17 @@ import javax.inject.Inject
  */
 @HiltViewModel
 internal class MarketReviewFragmentViewModel @Inject constructor(
-    private val getMarkerReviewUseCase: GetMarketReviewUseCase,
-    private val insertSearchedCoinUseCase: InsertSearchedCoinUseCase,
-    private val getAllSearchedCoinUseCase: GetAllSearchedCoinUseCase,
+    private val getPagedMarketReviewSortedByMarketCapUseCase: GetPagedMarketReviewSortedByMarketCapUseCase,
+    private val getPagedMarketReviewSortedByChangePercent24hUseCase: GetPagedMarketReviewSortedByChangePercent24hUseCase,
+    private val getPagedMarketReviewSortedByPriceAscUseCase: GetPagedMarketReviewSortedByPriceAscUseCase,
+    private val getPagedMarketReviewSortedByPriceDescUseCase: GetPagedMarketReviewSortedByPriceDescUseCase,
     private val getCoinReviewUseCase: GetCoinReviewUseCase,
-    private val clearSearchedCoinUseCase: ClearSearchedCoinUseCase,
 ) : ViewModel() {
+    private val _state = MutableStateFlow(MarketReviewFragmentState())
+    val state = _state.asStateFlow()
+    private val _effects = MutableSharedFlow<MarketReviewFragmentEffect>()
+    val effects = _effects.asSharedFlow()
 
-
-    /**
-     * Флаг, указывающий, был ли уже применен фильтр по цене.
-     */
-    private var firstTimePriceFilter = true
 
     /**
      * Индекс первого элемента, который должен быть обновлен при загрузке новых данных.
@@ -53,15 +60,37 @@ internal class MarketReviewFragmentViewModel @Inject constructor(
      */
     private var amountUpdateElement = 0
 
-    private val _state = MutableStateFlow(MarketReviewFragmentState())
-    val state = _state.asStateFlow()
+    private var pagedFlowJob: Job? = null
+    private fun changePagedFlowJob(
+        getPagedMarketReviewUseCase: GetPagedMarketReviewUseCase,
+        search: String = ""
+    ) {
+        pagedFlowJob?.cancel()
+        pagedFlowJob = viewModelScope.launchIO {
+            getPagedMarketReviewUseCase.invoke(
+                search = search,
+                pageSize = 20,
+                onStart = {
+                    _state.update { it.copy(isLoading = true) }
+                },
+                onEnd = {
+                    _state.update { it.copy(isLoading = false) }
+                }
+            ).cachedIn(viewModelScope).collectLatest { coins ->
+                _state.update { it.copy(pagingData = coins) }
+            }
+        }
+    }
+
+    private var realtimeUpdateJob: Job? = null
+
+    init {
+        filterByMarketcap()
+    }
+
     fun handleIntent(intent: MarketReviewFragmentIntent) {
         viewModelScope.launchIO {
             when (intent) {
-                MarketReviewFragmentIntent.ClearSearchData -> {
-                    clearSearchData()
-                }
-
                 MarketReviewFragmentIntent.FilterByMarketCap -> {
                     filterByMarketcap()
                 }
@@ -89,54 +118,62 @@ internal class MarketReviewFragmentViewModel @Inject constructor(
 
                 is MarketReviewFragmentIntent.UpdateSearchRequest -> {
                     updateSearchRequest(intent.searchRequest)
+                    updateCurrentFlowWithSearchRequest(intent.searchRequest)
                 }
 
-                is MarketReviewFragmentIntent.AddSearchedCoin -> {
-                    if (_state.value.isSearch) {
-                        insertSearchedCoinUseCase.invoke(intent.searchedCoin)
-                    }
-                }
+
+                MarketReviewFragmentIntent.StartRealtimeUpdate -> startRealtimeUpdate()
+                MarketReviewFragmentIntent.StopRealtimeUpdate -> stopRealtimeUpdate()
+                is MarketReviewFragmentIntent.SetErrorState -> setErrorState(intent.isError)
             }
         }
     }
 
-    init {
-        viewModelScope.launchIO {
-            getAllSearchedCoinUseCase.invoke().collect { data ->
-                val searchedIds = data.map { it.coinID }
-                _state.update { state ->
-                    state.copy(searchedData = state.data.filter { it.id in searchedIds })
-                }
+
+    private fun setErrorState(isError: Boolean) {
+        _state.update { it.copy(isError = isError) }
+    }
+
+    private fun startRealtimeUpdate() {
+        realtimeUpdateJob = viewModelScope.launchIO {
+            while (isActive) {
+                _effects.emit(MarketReviewFragmentEffect.RefreshData)
+                delay(20000)
             }
         }
+    }
+
+    private fun stopRealtimeUpdate() {
+        realtimeUpdateJob?.cancel()
+        realtimeUpdateJob = null
     }
 
     /**
      * Инициализирует данные, выполняет загрузку рыночных обзоров.
      */
     private suspend fun initData() {
-        when (val result = getMarkerReviewUseCase()) {
-            is ResponseResult.Success -> {
-                _state.update {
-                    it.copy(
-                        isLoading = false,
-                        isError = false,
-                        data = result.value.toMutableList().filter {
-                            it.marketCapUsd > 0f && it.priceUsd > 0.1f
-                        }.sortedByDescending { it.marketCapUsd }
-                    )
-                }
-            }
-
-            is ResponseResult.Error -> {
-                _state.update {
-                    it.copy(
-                        isLoading = false,
-                        isError = true,
-                    )
-                }
-            }
-        }
+//        when (val result = getMarkerReviewUseCase(1, 10)) {
+//            is ResponseResult.Success -> {
+//                _state.update {
+//                    it.copy(
+//                        isLoading = false,
+//                        isError = false,
+//                        data = result.value.toMutableList().filter {
+//                            it.marketCapUsd > 0f && it.priceUsd > 0.1f
+//                        }.sortedByDescending { it.marketCapUsd }
+//                    )
+//                }
+//            }
+//
+//            is ResponseResult.Error -> {
+//                _state.update {
+//                    it.copy(
+//                        isLoading = false,
+//                        isError = true,
+//                    )
+//                }
+//            }
+//        }
     }
 
     /**
@@ -155,9 +192,11 @@ internal class MarketReviewFragmentViewModel @Inject constructor(
      * @param filterState Идентификатор фильтра.
      */
     private fun activateFilterState(filterState: FilterState) {
-        if (filterState != FilterState.FILTER_BY_PRICE) firstTimePriceFilter = true
         _state.update {
-            it.copy(filterState = filterState)
+            it.copy(
+                filterState = filterState,
+//                filterByAsc = if (filterState != FilterState.FILTER_BY_PRICE) true else it.filterByAsc
+            )
         }
     }
 
@@ -166,8 +205,30 @@ internal class MarketReviewFragmentViewModel @Inject constructor(
      */
     private fun filterByMarketcap() {
         activateFilterState(FilterState.FILTER_BY_MARKETCAP)
-        _state.update {
-            it.copy(data = it.data.sortedByDescending { element -> element.marketCapUsd })
+        changePagedFlowJob(getPagedMarketReviewSortedByMarketCapUseCase)
+
+//        _state.update {
+//            it.copy(data = it.data.sortedByDescending { element -> element.marketCapUsd })
+//        }
+    }
+
+    private fun updateCurrentFlowWithSearchRequest(searchResuest: String) {
+        val state = _state.value
+        when (state.filterState) {
+            FilterState.FILTER_BY_MARKETCAP -> changePagedFlowJob(
+                getPagedMarketReviewUseCase = getPagedMarketReviewSortedByMarketCapUseCase,
+                search = searchResuest
+            )
+
+            FilterState.FILTER_BY_PERCENT -> changePagedFlowJob(
+                getPagedMarketReviewUseCase = getPagedMarketReviewSortedByChangePercent24hUseCase,
+                search = searchResuest
+            )
+
+            FilterState.FILTER_BY_PRICE -> changePagedFlowJob(
+                getPagedMarketReviewUseCase = if (state.filterByAsc) getPagedMarketReviewSortedByPriceAscUseCase else getPagedMarketReviewSortedByPriceDescUseCase,
+                search = searchResuest
+            )
         }
     }
 
@@ -176,25 +237,36 @@ internal class MarketReviewFragmentViewModel @Inject constructor(
      */
     private fun filterByPercent() {
         activateFilterState(FilterState.FILTER_BY_PERCENT)
-        _state.update {
-            it.copy(data = it.data.sortedByDescending { element -> element.changePercent24Hr })
-        }
+        changePagedFlowJob(getPagedMarketReviewSortedByChangePercent24hUseCase)
+//        _state.update {
+//            it.copy(data = it.data.sortedByDescending { element -> element.changePercent24Hr })
+//        }
     }
 
     /**
      * Сортирует данные по цене.
      */
     private fun filterByPrice() {
-        activateFilterState(FilterState.FILTER_BY_PRICE)
-        if (!firstTimePriceFilter) {
-            _state.update {
-                it.copy(filterOrder = !it.filterOrder)
+        val state = _state.value
+        if (state.filterState == FilterState.FILTER_BY_PRICE) {
+            if (!state.filterByAsc) {
+                _state.update {
+                    it.copy(filterByAsc = true)
+                }
+                changePagedFlowJob(getPagedMarketReviewSortedByPriceAscUseCase)
+            } else {
+                _state.update {
+                    it.copy(filterByAsc = false)
+                }
+                changePagedFlowJob(getPagedMarketReviewSortedByPriceDescUseCase)
             }
-        } else firstTimePriceFilter = false
-        _state.update {
-            it.copy(data = if (it.filterOrder) it.data.sortedBy { element -> element.priceUsd }
-                .toMutableList()
-            else it.data.sortedByDescending { element -> element.priceUsd }.toMutableList())
+        } else {
+            activateFilterState(FilterState.FILTER_BY_PRICE)
+            if (state.filterByAsc) {
+                changePagedFlowJob(getPagedMarketReviewSortedByPriceAscUseCase)
+            } else {
+                changePagedFlowJob(getPagedMarketReviewSortedByPriceDescUseCase)
+            }
         }
     }
 
@@ -267,12 +339,5 @@ internal class MarketReviewFragmentViewModel @Inject constructor(
                 }
             }
         } else initData()
-    }
-
-    /**
-     * Очищает данные поиска.
-     */
-    private suspend fun clearSearchData() {
-        clearSearchedCoinUseCase()
     }
 }

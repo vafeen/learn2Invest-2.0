@@ -8,7 +8,7 @@ plugins {
 
 android {
     namespace = "ru.surf.learn2invest.data"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         minSdk = 26

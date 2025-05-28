@@ -107,6 +107,12 @@ internal class AuthSignUpActivityViewModel @Inject constructor(
                                                 }
                                             })
                                     )
+                                } else {
+                                    settingsManager.update {
+                                        it.copy(biometry = false)
+                                    }
+                                    _effects.emit(AuthActivityEffect.NavigateToMainScreen)
+                                    _effects.emit(AuthActivityEffect.Finish)
                                 }
                             }
                         })

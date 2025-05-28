@@ -132,19 +132,6 @@
         app:layout_constraintTop_toBottomOf="@+id/textInputLayout" />
 
     <TextView
-        android:id="@+id/clear_tv"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="24dp"
-        android:layout_marginEnd="36dp"
-        android:text="@string/clear"
-        android:textAppearance="@style/Text.Bold.16"
-        android:textColor="@color/btn_clear"
-        android:visibility="gone"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/textInputLayout" />
-
-    <TextView
         android:id="@+id/network_error_tv"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"

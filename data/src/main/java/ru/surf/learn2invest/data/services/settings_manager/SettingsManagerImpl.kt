@@ -1,7 +1,6 @@
 package ru.surf.learn2invest.data.services.settings_manager
 
 import android.content.SharedPreferences
-import android.util.Log
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -49,7 +48,6 @@ internal class SettingsManagerImpl @Inject constructor(
     @Synchronized
     override fun update(updating: (Settings) -> Settings) {
         val newSettings = updating(_settingsFlow.value)
-        Log.d("sp", "save ${newSettings.toSettingsSerializable().toJsonString()}")
         sharedPreferences.save(newSettings.toSettingsSerializable())
         _settingsFlow.value = newSettings
     }

@@ -7,7 +7,7 @@ plugins {
 
 android {
     namespace = "ru.surf.learn2invest.domain"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         minSdk = 26
@@ -45,6 +45,8 @@ dependencies {
     // hilt
     implementation(libs.hilt.android)
     kapt(libs.hilt.android.compiler)
+    // paging
+    api(libs.androidx.paging.runtime.ktx)
 }
 
 

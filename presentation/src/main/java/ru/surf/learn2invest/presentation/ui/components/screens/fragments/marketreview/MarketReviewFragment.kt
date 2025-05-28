@@ -12,6 +12,7 @@ import android.view.inputmethod.InputMethodManager
 import androidx.core.view.isVisible
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
+import androidx.paging.LoadState
 import androidx.recyclerview.widget.LinearLayoutManager
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Job
@@ -22,6 +23,7 @@ import ru.surf.learn2invest.domain.utils.launchMAIN
 import ru.surf.learn2invest.presentation.R
 import ru.surf.learn2invest.presentation.databinding.FragmentMarketReviewBinding
 import ru.surf.learn2invest.presentation.ui.components.screens.fragments.common.BaseResFragment
+import ru.surf.learn2invest.presentation.ui.components.screens.fragments.marketreview.paging.MarketReviewPagingAdapter
 import ru.surf.learn2invest.presentation.utils.setStatusBarColor
 import ru.surf.learn2invest.presentation.utils.textListener
 import javax.inject.Inject
@@ -37,13 +39,16 @@ internal class MarketReviewFragment : BaseResFragment() {
     private var realTimeUpdateJob: Job? = null
 
     @Inject
-    lateinit var adapterFactory: MarketReviewAdapter.Factory
+    lateinit var adapter: MarketReviewPagingAdapter
+//    @Inject
+//    lateinit var adapterFactory: MarketReviewAdapter.Factory
 
-    private val adapter: MarketReviewAdapter by lazy {
-        adapterFactory.create {
-            viewModel.handleIntent(MarketReviewFragmentIntent.AddSearchedCoin(it))
-        }
-    }
+
+//    private val adapter: MarketReviewAdapter by lazy {
+//        adapterFactory.create {
+//            viewModel.handleIntent(MarketReviewFragmentIntent.AddSearchedCoin(it))
+//        }
+//    }
 
     // Создание представления фрагмента
     override fun onCreateView(
@@ -63,11 +68,20 @@ internal class MarketReviewFragment : BaseResFragment() {
         // Настройка RecyclerView для отображения данных
         binding.marketReviewRecyclerview.layoutManager = LinearLayoutManager(this.requireContext())
         binding.marketReviewRecyclerview.adapter = adapter
+        adapter.addLoadStateListener { loadState ->
+            val error = when {
+                loadState.refresh is LoadState.Error -> loadState.refresh as LoadState.Error
+                loadState.prepend is LoadState.Error -> loadState.prepend as LoadState.Error
+                loadState.append is LoadState.Error -> loadState.append as LoadState.Error
+                else -> null
+            }
+            viewModel.handleIntent(MarketReviewFragmentIntent.SetErrorState(error != null))
+        }
         // Слушаем изменения фильтрации
         viewLifecycleOwner.lifecycleScope.launchMAIN {
             viewModel.state.collectLatest { state ->
                 binding.apply {
-                    if (state.filterOrder) {
+                    if (state.filterByAsc) {
                         filterByPrice.setIconResource(R.drawable.arrow_top_green)
                         filterByPrice.setIconTintResource(R.color.label)
                     } else {
@@ -85,17 +99,18 @@ internal class MarketReviewFragment : BaseResFragment() {
                     }
                     youSearch.isVisible =
                         state.data.isNotEmpty() && state.searchRequest.isBlank() && state.isSearch
-                    clearTv.isVisible =
-                        state.data.isNotEmpty() && state.searchRequest.isBlank() && state.isSearch
                     cancelTV.isVisible = state.isSearch
                     filterByPrice.isVisible = !state.isSearch
                     filterByMarketcap.isVisible = !state.isSearch
                     filterByChangePercent24Hr.isVisible = !state.isSearch
-                    adapter.data = when {
-                        state.isSearch && state.searchRequest.isNotEmpty() -> state.dataBySearchRequest
-                        state.isSearch && state.searchRequest.isEmpty() -> state.searchedData
-                        else -> state.data
-                    }
+
+
+//                    adapter.data = when {
+//                        state.isSearch && state.searchRequest.isNotEmpty() -> state.dataBySearchRequest
+//                        state.isSearch && state.searchRequest.isEmpty() -> state.searchedData
+//                        else -> state.data
+//                    }
+
                     state.filterState.also {
                         val isDarkTheme =
                             resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK == Configuration.UI_MODE_NIGHT_YES
@@ -149,7 +164,14 @@ internal class MarketReviewFragment : BaseResFragment() {
                                 )
                             )
                     }
-
+                    adapter.submitData(state.pagingData)
+                }
+            }
+        }
+        lifecycleScope.launchMAIN {
+            viewModel.effects.collectLatest { effect ->
+                when (effect) {
+                    MarketReviewFragmentEffect.RefreshData -> adapter.refresh()
                 }
             }
         }
@@ -171,13 +193,13 @@ internal class MarketReviewFragment : BaseResFragment() {
             }
 
             searchEditText.setOnFocusChangeListener { _, hasFocus ->
-                if (hasFocus) viewModel.handleIntent(MarketReviewFragmentIntent.SetSearchState(true))
+                if (hasFocus) viewModel.handleIntent(
+                    MarketReviewFragmentIntent.SetSearchState(
+                        true
+                    )
+                )
             }
 
-
-            clearTv.setOnClickListener {
-                viewModel.handleIntent(MarketReviewFragmentIntent.ClearSearchData)
-            }
 
             cancelTV.setOnClickListener {
                 viewModel.handleIntent(MarketReviewFragmentIntent.SetSearchState(false))
@@ -195,12 +217,14 @@ internal class MarketReviewFragment : BaseResFragment() {
     override fun onResume() {
         super.onResume()
         realTimeUpdateJob = startRealtimeUpdate()
+        viewModel.handleIntent(MarketReviewFragmentIntent.StartRealtimeUpdate)
     }
 
     // Остановка обновлений данных при приостановке фрагмента
     override fun onPause() {
         super.onPause()
         realTimeUpdateJob?.cancel()
+        viewModel.handleIntent(MarketReviewFragmentIntent.StopRealtimeUpdate)
     }
 
     // Функция для обновления данных каждую 5 секунд

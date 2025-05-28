@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "4674b45e1b20c76079a6839355427f34",
+    "identityHash": "2c878bbbacb0fa8bcd502c978b14923c",
     "entities": [
       {
         "tableName": "AssetBalanceHistoryEntity",
@@ -83,24 +83,6 @@
         }
       },
       {
-        "tableName": "SearchedCoinEntity",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`coinID` TEXT NOT NULL, PRIMARY KEY(`coinID`))",
-        "fields": [
-          {
-            "fieldPath": "coinID",
-            "columnName": "coinID",
-            "affinity": "TEXT",
-            "notNull": true
-          }
-        ],
-        "primaryKey": {
-          "autoGenerate": false,
-          "columnNames": [
-            "coinID"
-          ]
-        }
-      },
-      {
         "tableName": "TransactionEntity",
         "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `coinID` TEXT NOT NULL, `name` TEXT NOT NULL, `symbol` TEXT NOT NULL, `coinPrice` REAL NOT NULL, `dealPrice` REAL NOT NULL, `amount` INTEGER NOT NULL, `transactionType` TEXT NOT NULL)",
         "fields": [
@@ -163,7 +145,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '4674b45e1b20c76079a6839355427f34')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '2c878bbbacb0fa8bcd502c978b14923c')"
     ]
   }
 }
