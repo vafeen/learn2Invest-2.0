@@ -18,6 +18,7 @@ Learn2Invest это биржевой симмулятор для трениро�
     - [Обзор актива](#обзор-актива)
     - [История](#история)
     - [Настройки](#настройки)
+    - [Торговый пароль](#торговый-пароль)
 
 ## Участники проекта 
 * Воробьев Владимир Васильевич (Arengol (Github)/Vladimir (Имя в локальных настройках git))
@@ -90,6 +91,14 @@ https://github.com/vafeen/learn2Invest/assets/67644124/7639e883-1c0b-4ded-ad49-9
 
 ### Настройки 
 <img src="https://github.com/vafeen/learn2Invest/assets/67644124/a7ab6a8a-99cf-459c-9a58-23c38bbc4243" width="300"/> <img src="https://github.com/vafeen/learn2Invest/assets/67644124/9614395e-a854-4dcc-932c-703f733c5f73" width="300"/> <img src="https://github.com/vafeen/learn2Invest/assets/67644124/7d21243f-c22a-4002-9fac-7cb71008fa67" width="300"/>
+
+### Торговый пароль 
+<img src="https://github.com/user-attachments/assets/e95f845a-baf8-4af1-853a-f00741cb2260" width="300"/>
+<img src="https://github.com/user-attachments/assets/34d4720f-0af2-4c6d-bafe-effd1d10a318" width="300"/>
+<img src="https://github.com/user-attachments/assets/c0e28ca8-4279-4106-972f-4b053b19150c" width="300"/>
+<img src="https://github.com/user-attachments/assets/2fa9e962-cc51-44f2-a1dd-6f1e0d572f4a" width="300"/>
+
+
 
 
 
