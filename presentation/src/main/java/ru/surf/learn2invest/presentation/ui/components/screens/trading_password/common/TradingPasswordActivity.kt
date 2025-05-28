@@ -158,6 +158,7 @@ internal abstract class TradingPasswordActivity : AppCompatActivity() {
                     passwordConfirmTextInputLayout.isVisible = state.passwordConfirmEditText != null
 
                     buttonDoTrading.isEnabled = state.confirmButtonIsEnabled
+                    buttonDoTrading.text = state.mainButtonText
                 }
             }
 
