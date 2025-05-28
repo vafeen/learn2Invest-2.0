@@ -4,6 +4,8 @@ import android.content.Intent
 import android.content.res.ColorStateList
 import android.content.res.Configuration
 import android.os.Bundle
+import androidx.activity.SystemBarStyle
+import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
@@ -15,8 +17,6 @@ import ru.surf.learn2invest.presentation.databinding.ActivityAssetReviewBinding
 import ru.surf.learn2invest.presentation.ui.components.screens.fragments.asset_overview.AssetOverviewFragment
 import ru.surf.learn2invest.presentation.ui.components.screens.fragments.subhistory.SubHistoryFragment
 import ru.surf.learn2invest.presentation.utils.NoArgException
-import ru.surf.learn2invest.presentation.utils.setNavigationBarColor
-import ru.surf.learn2invest.presentation.utils.setStatusBarColor
 import ru.surf.learn2invest.presentation.utils.viewModelCreator
 import javax.inject.Inject
 
@@ -46,9 +46,22 @@ internal class AssetReviewActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
 
         // Установка цветов для статус бара и навигационной панели
-        setStatusBarColor(window, this, R.color.white, R.color.main_background_dark)
-        setNavigationBarColor(window, this, R.color.white, R.color.main_background_dark)
-
+        enableEdgeToEdge(
+            statusBarStyle = SystemBarStyle.auto(
+                this.getColor(R.color.white),
+                this.getColor(R.color.main_background_dark),
+                {
+                    resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK == Configuration.UI_MODE_NIGHT_YES
+                }
+            ),
+            navigationBarStyle = SystemBarStyle.auto(
+                this.getColor(R.color.white),
+                this.getColor(R.color.main_background_dark),
+                {
+                    resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK == Configuration.UI_MODE_NIGHT_YES
+                }
+            )
+        )
         // Инициализация привязки и привязка UI
         val binding = ActivityAssetReviewBinding.inflate(layoutInflater)
         setContentView(binding.root)

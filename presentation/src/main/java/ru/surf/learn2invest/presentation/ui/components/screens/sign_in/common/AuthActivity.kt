@@ -1,10 +1,15 @@
 package ru.surf.learn2invest.presentation.ui.components.screens.sign_in.common
 
 import android.content.Intent
+import android.content.res.Configuration
 import android.graphics.Color
 import android.graphics.drawable.Drawable
 import android.os.Bundle
+import androidx.activity.SystemBarStyle
+import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.flow.collectLatest
@@ -17,8 +22,6 @@ import ru.surf.learn2invest.presentation.ui.components.screens.host.HostActivity
 import ru.surf.learn2invest.presentation.ui.components.screens.sign_in.changing_pin.AuthChangingPinActivity
 import ru.surf.learn2invest.presentation.ui.components.screens.sign_in.sign_in.AuthSignInActivity
 import ru.surf.learn2invest.presentation.ui.components.screens.sign_in.sign_up.AuthSignUpActivity
-import ru.surf.learn2invest.presentation.utils.setNavigationBarColor
-import ru.surf.learn2invest.presentation.utils.setStatusBarColor
 import javax.inject.Inject
 
 /**
@@ -47,14 +50,35 @@ internal abstract class AuthActivity : AppCompatActivity() {
      */
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        setStatusBarColor(window, this, R.color.accent_background, R.color.accent_background_dark)
-        setNavigationBarColor(
-            window, this, R.color.accent_background, R.color.accent_background_dark
+        enableEdgeToEdge(
+            statusBarStyle = SystemBarStyle.auto(
+                this.getColor(R.color.accent_background),
+                this.getColor(R.color.accent_background_dark),
+                {
+                    resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK == Configuration.UI_MODE_NIGHT_YES
+                }
+            ),
+            navigationBarStyle = SystemBarStyle.auto(
+                this.getColor(R.color.accent_background),
+                this.getColor(R.color.accent_background_dark),
+                {
+                    resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK == Configuration.UI_MODE_NIGHT_YES
+                }
+            )
         )
 
         val binding = ActivitySignInBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
+            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            v.setPadding(
+                systemBars.left,
+                systemBars.top,
+                systemBars.right,
+                systemBars.bottom
+            )
+            insets
+        }
         initListeners(binding)
     }
 

@@ -21,7 +21,6 @@ import ru.surf.learn2invest.presentation.R
 import ru.surf.learn2invest.presentation.databinding.FragmentMarketReviewBinding
 import ru.surf.learn2invest.presentation.ui.components.screens.fragments.common.BaseResFragment
 import ru.surf.learn2invest.presentation.ui.components.screens.fragments.marketreview.paging.MarketReviewPagingAdapter
-import ru.surf.learn2invest.presentation.utils.setStatusBarColor
 import ru.surf.learn2invest.presentation.utils.textListener
 import javax.inject.Inject
 
@@ -53,9 +52,6 @@ internal class MarketReviewFragment : BaseResFragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        activity?.apply {
-            setStatusBarColor(window, this, R.color.white, R.color.main_background_dark)
-        }
         val binding = FragmentMarketReviewBinding.inflate(layoutInflater)
         initListeners(binding)
         return binding.root

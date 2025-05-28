@@ -1,13 +1,17 @@
 package ru.surf.learn2invest.presentation.ui.components.screens.host
 
+import android.content.res.Configuration
 import android.os.Bundle
+import androidx.activity.SystemBarStyle
+import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
 import dagger.hilt.android.AndroidEntryPoint
 import ru.surf.learn2invest.presentation.R
 import ru.surf.learn2invest.presentation.databinding.ActivityHostBinding
-import ru.surf.learn2invest.presentation.utils.setNavigationBarColor
 
 /**
  * Главный экран приложения с BottomBar.
@@ -26,26 +30,35 @@ internal class HostActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Устанавливает цвета для навигационной панели
-        setNavigationBarColor(
-            window, // окно активити
-            this,   // контекст активности
-            R.color.accent_background, // основной цвет фона
-            R.color.accent_background_dark // цвет фона для темной темы
-        )
-
-        // Привязка интерфейса с использованием ActivityHostBinding
         val binding = ActivityHostBinding.inflate(layoutInflater)
 
-        // Устанавливаем разметку для активности
         setContentView(binding.root)
+        val style = SystemBarStyle.auto(
+            this.getColor(R.color.white),
+            this.getColor(R.color.main_background_dark),
+            {
+                resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK == Configuration.UI_MODE_NIGHT_YES
+            }
+        )
+        enableEdgeToEdge(
+            statusBarStyle = style,
+            navigationBarStyle = style
+        )
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
+            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            v.setPadding(
+                systemBars.left,
+                systemBars.top,
+                systemBars.right,
+                0
+            )
+            insets
+        }
 
-        // Находим контейнер для фрагментов и получаем контроллер навигации
         val navHostFragment =
             supportFragmentManager.findFragmentById(R.id.host_container_view) as NavHostFragment
         val navController = navHostFragment.navController
 
-        // Настройка нижней навигационной панели (Bottom Navigation) для работы с контроллером навигации
         binding.bottomNavigationView.setupWithNavController(navController)
         binding.bottomNavigationView.setOnItemSelectedListener { menuItem ->
             val navController = navHostFragment.navController

@@ -10,10 +10,8 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import dagger.hilt.android.AndroidEntryPoint
 import ru.surf.learn2invest.domain.utils.launchMAIN
-import ru.surf.learn2invest.presentation.R
 import ru.surf.learn2invest.presentation.databinding.FragmentHistoryBinding
 import ru.surf.learn2invest.presentation.ui.components.screens.fragments.common.BaseResFragment
-import ru.surf.learn2invest.presentation.utils.setStatusBarColor
 import javax.inject.Inject
 
 /**
@@ -32,17 +30,9 @@ internal class HistoryFragment : BaseResFragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        activity?.apply {
-            setStatusBarColor(
-                window,
-                this,
-                R.color.accent_background,
-                R.color.accent_background_dark
-            )
-        }
-        return FragmentHistoryBinding.inflate(inflater, container, false).also {
-            initListeners(it)
-        }.root
+        val binding = FragmentHistoryBinding.inflate(inflater, container, false)
+        initListeners(binding)
+        return binding.root
     }
 
     private fun initListeners(binding: FragmentHistoryBinding) {

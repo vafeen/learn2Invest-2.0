@@ -6,6 +6,8 @@ import android.os.Bundle
 import android.view.View
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
+import androidx.activity.SystemBarStyle
+import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.WindowCompat
@@ -18,8 +20,6 @@ import ru.surf.learn2invest.domain.utils.launchMAIN
 import ru.surf.learn2invest.presentation.R
 import ru.surf.learn2invest.presentation.databinding.ActivitySignUpBinding
 import ru.surf.learn2invest.presentation.ui.components.screens.sign_in.common.AuthActivity
-import ru.surf.learn2invest.presentation.utils.setNavigationBarColor
-import ru.surf.learn2invest.presentation.utils.setStatusBarColor
 import ru.surf.learn2invest.presentation.utils.textListener
 
 /**
@@ -40,9 +40,22 @@ internal class SignUpActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         // Настройка цветов навигационной панели и статус-бара
-        setNavigationBarColor(window, this, R.color.white, R.color.main_background_dark)
-        setStatusBarColor(window, this, R.color.accent_background, R.color.accent_background_dark)
-
+        enableEdgeToEdge(
+            statusBarStyle = SystemBarStyle.auto(
+                this.getColor(R.color.accent_background),
+                this.getColor(R.color.accent_background_dark),
+                {
+                    resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK == Configuration.UI_MODE_NIGHT_YES
+                }
+            ),
+            navigationBarStyle = SystemBarStyle.auto(
+                this.getColor(R.color.accent_background),
+                this.getColor(R.color.accent_background_dark),
+                {
+                    resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK == Configuration.UI_MODE_NIGHT_YES
+                }
+            )
+        )
         // Инициализация привязки и отображение UI
         val binding = ActivitySignUpBinding.inflate(layoutInflater)
         setContentView(binding.root)

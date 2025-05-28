@@ -1,15 +1,13 @@
 package ru.surf.learn2invest.presentation.ui.main
 
 import android.os.Bundle
+import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
 import ru.surf.learn2invest.domain.utils.launchMAIN
-import ru.surf.learn2invest.presentation.R
 import ru.surf.learn2invest.presentation.databinding.ActivityMainBinding
-import ru.surf.learn2invest.presentation.utils.setNavigationBarColor
-import ru.surf.learn2invest.presentation.utils.setStatusBarColor
 
 @AndroidEntryPoint
 internal class MainActivity : AppCompatActivity() {
@@ -21,8 +19,7 @@ internal class MainActivity : AppCompatActivity() {
         val binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        setStatusBarColor(window, this, R.color.black, R.color.black)
-        setNavigationBarColor(window, this, R.color.black, R.color.black)
+        enableEdgeToEdge()
 
         initListeners()
         viewModel.handleIntent(MainActivityIntent.ProcessSplash(binding.splashTextView))

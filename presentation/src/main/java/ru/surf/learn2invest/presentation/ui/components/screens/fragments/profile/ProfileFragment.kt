@@ -18,7 +18,6 @@ import ru.surf.learn2invest.presentation.ui.components.alert_dialogs.delete_prof
 import ru.surf.learn2invest.presentation.ui.components.alert_dialogs.reset_stats.ResetStatsDialog
 import ru.surf.learn2invest.presentation.ui.components.screens.sign_in.common.AuthActivity
 import ru.surf.learn2invest.presentation.ui.components.screens.trading_password.common.TradingPasswordActivity
-import ru.surf.learn2invest.presentation.utils.setStatusBarColor
 import javax.inject.Inject
 
 /**
@@ -33,10 +32,6 @@ internal class ProfileFragment : Fragment() {
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
     ): View {
-        activity?.apply {
-            setStatusBarColor(window, this, R.color.white, R.color.main_background_dark)
-        }
-
         val binding = FragmentProfileBinding.inflate(inflater, container, false)
         initListeners(binding)
         return binding.root

@@ -25,7 +25,6 @@ import ru.surf.learn2invest.presentation.ui.components.screens.fragments.common.
 import ru.surf.learn2invest.presentation.utils.DevStrLink
 import ru.surf.learn2invest.presentation.utils.getVersionName
 import ru.surf.learn2invest.presentation.utils.getWithCurrency
-import ru.surf.learn2invest.presentation.utils.setStatusBarColor
 import java.util.Locale
 import javax.inject.Inject
 
@@ -47,19 +46,9 @@ internal class PortfolioFragment : BaseResFragment() {
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?,
     ): View {
-        // Настройка цвета статус-бара
-        activity?.apply {
-            setStatusBarColor(
-                window,
-                this,
-                R.color.accent_background,
-                R.color.accent_background_dark
-            )
-        }
-
-        return FragmentPortfolioBinding.inflate(inflater, container, false).also {
-            initListeners(it)
-        }.root
+        val binding = FragmentPortfolioBinding.inflate(inflater, container, false)
+        initListeners(binding)
+        return binding.root
     }
 
     private fun initListeners(binding: FragmentPortfolioBinding) {
