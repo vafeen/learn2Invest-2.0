@@ -15,9 +15,10 @@ import ru.surf.learn2invest.domain.utils.launchIO
 /**
  * Абстрактная ViewModel для управления логикой экранов аутентификации по PIN-коду.
  *
- * @param initialState Начальное состояние экрана.
- * @param verifyPINUseCase UseCase для проверки корректности PIN-кода.
- * @param settingsManager Менеджер профиля пользователя.
+ * @param initialState Начальное состояние экрана
+ * @param verifyPINUseCase UseCase для проверки корректности PIN-кода
+ * @param settingsManager Менеджер профиля пользователя
+ * @param animateDotsUseCase UseCase для анимации точек ввода PIN
  */
 internal abstract class AuthActivityViewModel(
     initialState: AuthActivityState,

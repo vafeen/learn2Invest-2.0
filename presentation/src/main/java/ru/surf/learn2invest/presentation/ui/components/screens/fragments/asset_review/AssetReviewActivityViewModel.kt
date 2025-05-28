@@ -17,22 +17,35 @@ import ru.surf.learn2invest.domain.utils.launchIO
 
 /**
  * ViewModel для [AssetReviewActivity], управляющий загрузкой иконки актива.
- * Хранит и управляет запросом на загрузку иконки.
+ * Хранит и управляет запросом на загрузку иконки, а также состоянием и эффектами UI.
+ *
+ * @property loadCoinIconUseCase UseCase для загрузки иконки актива.
+ * @property id Идентификатор актива.
+ * @property name Название актива.
+ * @property symbol Символ актива.
  */
 internal class AssetReviewActivityViewModel @AssistedInject constructor(
     private val loadCoinIconUseCase: LoadCoinIconUseCase,
     @Assisted("id") private val id: String,
     @Assisted("name") private val name: String,
     @Assisted("symbol") private val symbol: String,
-) :
-    ViewModel() {
+) : ViewModel() {
+
     private var imageLoaderRequest: CoinIconLoader.Request? = null
+
     private val _state = MutableStateFlow(
         AssetReviewActivityState(name = name, symbol = symbol, id = id)
     )
     val state = _state.asStateFlow()
+
     private val _effects = MutableSharedFlow<AssetReviewActivityEffect>()
     val effects = _effects.asSharedFlow()
+
+    /**
+     * Обрабатывает пользовательские действия (интенты) и выполняет соответствующие операции.
+     *
+     * @param intent Интент, описывающий действие пользователя.
+     */
     fun handleIntent(intent: AssetReviewActivityIntent) {
         viewModelScope.launchIO {
             when (intent) {
@@ -69,13 +82,16 @@ internal class AssetReviewActivityViewModel @AssistedInject constructor(
 
     /**
      * Загружает иконку актива и отображает её в переданном ImageView.
+     *
+     * @param imageView ImageView, в который будет загружена иконка.
+     * @param symbol Символ актива, по которому загружается иконка.
      */
     private fun loadImage(imageView: ImageView, symbol: String) {
         imageLoaderRequest = loadCoinIconUseCase.invoke(imageView, symbol)
     }
 
     /**
-     * Отменяет текущую загрузку иконки.
+     * Отменяет текущую загрузку иконки, если она выполняется.
      */
     private fun cancelLoadingImage() {
         imageLoaderRequest?.cancel()
@@ -84,11 +100,12 @@ internal class AssetReviewActivityViewModel @AssistedInject constructor(
     @AssistedFactory
     interface Factory {
         /**
-         * Создание экземпляра [AssetReviewActivityViewModel]
+         * Создаёт экземпляр [AssetReviewActivityViewModel] с указанными параметрами.
          *
-         * @param id Идентификатор актива
-         * @param symbol Символ актива
-         * @return Новый экземпляр [AssetReviewActivityViewModel]
+         * @param id Идентификатор актива.
+         * @param name Название актива.
+         * @param symbol Символ актива.
+         * @return Новый экземпляр [AssetReviewActivityViewModel].
          */
         fun createAssetReviewActivityViewModel(
             @Assisted("id") id: String,

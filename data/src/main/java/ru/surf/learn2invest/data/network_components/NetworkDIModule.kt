@@ -21,7 +21,7 @@ import ru.surf.learn2invest.domain.network.NetworkRepository
 
 @Module
 @InstallIn(ActivityRetainedComponent::class)
-internal object NetworkDIModule {
+internal class NetworkDIModule {
     @Provides
     fun provideNetworkPagedRepository(impl: NetworkPagedRepositoryImpl): NetworkPagedRepository =
         impl

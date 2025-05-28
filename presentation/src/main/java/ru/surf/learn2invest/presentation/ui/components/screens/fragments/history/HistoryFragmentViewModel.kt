@@ -13,6 +13,8 @@ import javax.inject.Inject
 
 /**
  * ViewModel для [HistoryFragment]. Получает данные всех транзакций и обрабатывает их.
+ *
+ * @param getAllTransactionUseCase UseCase для получения всех транзакций.
  */
 @HiltViewModel
 internal class HistoryFragmentViewModel @Inject constructor(

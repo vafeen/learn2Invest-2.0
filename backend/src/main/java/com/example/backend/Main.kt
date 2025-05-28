@@ -1,5 +1,11 @@
 package com.example.backend
 
+import com.example.backend.models.CoinPriceResponse
+import com.example.backend.models.CoinReviewResponse
+import com.example.backend.models.CryptoDetailResponse
+import com.example.backend.models.CryptoListResponse
+import com.example.backend.models.CryptoPriceListResponse
+import com.example.backend.models.Info
 import io.ktor.http.HttpStatusCode
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.install
@@ -10,7 +16,6 @@ import io.ktor.server.plugins.cors.routing.CORS
 import io.ktor.server.response.respond
 import io.ktor.server.routing.get
 import io.ktor.server.routing.routing
-import kotlinx.serialization.Serializable
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -189,6 +194,7 @@ private fun generateInitialCoins(): MutableMap<String, CoinReviewResponse> {
     return result
 }
 
+// Компаратор по параметрам
 private fun getComparator(sortBy: String, sortOrder: String): Comparator<CoinReviewResponse> {
     val comparator = when (sortBy.lowercase()) {
         "marketCap" -> compareBy<CoinReviewResponse> { it.marketCapUsd }
@@ -263,51 +269,6 @@ internal fun generateDailyHistory(coinId: String, start: Long, end: Long): List<
     }
 }
 
-// Модели данных (остаются без изменений)
-@Serializable
-internal data class CoinPriceResponse(val priceUsd: Float, val time: Long, val date: String)
 
-@Serializable
-internal data class CryptoPriceListResponse(
-    val data: List<CoinPriceResponse>,
-    val info: Info = Info(
-        coins_num = data.size,
-        time = System.currentTimeMillis() / 1000
-    )
-)
 
-@Serializable
-internal data class CryptoListResponse(
-    val data: List<CoinReviewResponse>,
-    val info: Info = Info(
-        coins_num = data.size,
-        time = System.currentTimeMillis() / 1000
-    )
-)
 
-@Serializable
-internal data class CryptoDetailResponse(
-    val data: CoinReviewResponse,
-    val info: Info = Info(
-        coins_num = 1,
-        time = System.currentTimeMillis() / 1000
-    )
-)
-
-@Serializable
-internal data class Info(val coins_num: Int, val time: Long)
-
-@Serializable
-internal data class CoinReviewResponse(
-    val id: String,
-    val rank: Int,
-    val symbol: String,
-    val name: String,
-    val supply: Float,
-    val maxSupply: Float,
-    val marketCapUsd: Float,
-    val volumeUsd24Hr: Float,
-    val priceUsd: Float,
-    val changePercent24Hr: Float,
-    val vwap24Hr: Float
-)

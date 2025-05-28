@@ -51,7 +51,7 @@ internal class ResetStatsDialog : CustomAlertDialog() {
             }
         }
 
-        viewLifecycleOwner.lifecycleScope.launchMAIN {
+        lifecycleScope.launchMAIN {
             viewModel.effects.collect { effect ->
                 when (effect) {
                     ResetStatsDialogEffect.Dismiss -> {

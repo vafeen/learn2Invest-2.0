@@ -1,3 +1,4 @@
+
 package ru.surf.learn2invest.presentation.ui.components.alert_dialogs.delete_profile
 
 import android.content.Context
@@ -14,6 +15,13 @@ import ru.surf.learn2invest.domain.utils.launchIO
 import ru.surf.learn2invest.presentation.R
 import javax.inject.Inject
 
+/**
+ * ViewModel для диалога подтверждения удаления профиля.
+ * Управляет логикой удаления профиля и закрытия диалога.
+ *
+ * @property clearAppDatabaseUseCase UseCase для очистки базы данных приложения (удаления профиля).
+ * @property context Контекст приложения для доступа к ресурсам.
+ */
 @HiltViewModel
 internal class DeleteProfileDialogViewModel @Inject constructor(
     private val clearAppDatabaseUseCase: ClearAppDatabaseUseCase,
@@ -24,10 +32,19 @@ internal class DeleteProfileDialogViewModel @Inject constructor(
             text = context.getString(R.string.asking_to_delete_profile)
         )
     )
+
+    /** Поток состояния диалога. */
     val state = _state.asStateFlow()
     private val _effect = MutableSharedFlow<DeleteProfileDialogEffect>()
+
+    /** Поток эффектов (навигация, закрытие диалога и т.д.). */
     val effect: SharedFlow<DeleteProfileDialogEffect> = _effect
 
+    /**
+     * Обрабатывает входящие интенты (действия пользователя).
+     *
+     * @param intent Интент, пришедший от пользователя (удалить профиль или отменить).
+     */
     fun handle(intent: DeleteProfileDialogIntent) {
         when (intent) {
             DeleteProfileDialogIntent.DeleteProfile -> deleteProfile()
@@ -35,12 +52,18 @@ internal class DeleteProfileDialogViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Закрывает диалог.
+     */
     private fun dismiss() {
         viewModelScope.launchIO {
             _effect.emit(DeleteProfileDialogEffect.Dismiss)
         }
     }
 
+    /**
+     * Удаляет профиль и перезапускает приложение.
+     */
     private fun deleteProfile() {
         viewModelScope.launchIO {
             clearAppDatabaseUseCase()

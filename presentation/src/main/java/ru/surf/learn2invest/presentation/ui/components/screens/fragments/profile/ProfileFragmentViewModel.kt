@@ -30,7 +30,7 @@ import javax.inject.Inject
 internal class ProfileFragmentViewModel @Inject constructor(
     private val settingsManager: SettingsManager,
     private val clearAppDatabaseUseCase: ClearAppDatabaseUseCase,
-    val fingerprintAuthenticator: FingerprintAuthenticator,
+    private val fingerprintAuthenticator: FingerprintAuthenticator,
 ) : ViewModel() {
 
     // Поток данных профиля

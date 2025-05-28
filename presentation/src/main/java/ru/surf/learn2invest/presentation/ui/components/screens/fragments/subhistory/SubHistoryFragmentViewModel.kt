@@ -23,19 +23,9 @@ import ru.surf.learn2invest.domain.utils.launchIO
  *        используется для фильтрации данных, получаемых через use case.
  */
 internal class SubHistoryFragmentViewModel @AssistedInject constructor(
-    /**
-     * Используется для фильтрации и получения списка транзакций, которые относятся только к указанному символу монеты.
-     * Это сервис или use case, который взаимодействует с репозиторием данных для получения информации.
-     */
     getFilteredBySymbolTransactionUseCase: GetFilteredBySymbolTransactionUseCase,
-
-    /**
-     * Символ монеты, который передается в ViewModel. Это строка, которая представляет уникальный идентификатор монеты
-     * (например, "BTC", "ETH" и т.д.), по которому будут отфильтрованы транзакции.
-     */
     @Assisted val symbol: String,
-
-    ) : ViewModel() {
+) : ViewModel() {
     private val _state = MutableStateFlow(SubHistoryFragmentState())
     val state = _state.asStateFlow()
     fun handleIntent() {}

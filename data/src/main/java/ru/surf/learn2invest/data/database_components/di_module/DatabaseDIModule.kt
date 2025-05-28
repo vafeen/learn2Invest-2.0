@@ -12,7 +12,7 @@ import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
-internal object DatabaseDIModule {
+internal class DatabaseDIModule {
     @Provides
     @Singleton
     internal fun injectDatabase(@ApplicationContext context: Context): L2IDatabase =

@@ -31,6 +31,14 @@ import ru.surf.learn2invest.presentation.utils.priceChangesStr
 /**
  * [ViewModel] для фрагмента [AssetOverviewFragment], отвечающий за логику получения и обновления данных актива.
  * Загружает данные для графика, рыночной капитализации и информации о монете.
+ *
+ * @param getCoinHistoryUseCase UseCase для получения истории цены монеты.
+ * @param getCoinReviewUseCase UseCase для получения обзора монеты.
+ * @param getBySymbolAssetInvestUseCase UseCase для получения информации об активе по символу.
+ * @param id Идентификатор актива.
+ * @param name Название актива.
+ * @param symbol Символ актива.
+ * @param context Контекст приложения.
  */
 internal class AssetOverViewFragmentViewModel @AssistedInject constructor(
     private val getCoinHistoryUseCase: GetCoinHistoryUseCase,

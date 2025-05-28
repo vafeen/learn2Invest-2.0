@@ -20,14 +20,15 @@ import javax.inject.Inject
 
 /**
  * ViewModel для экрана регистрации PIN-кода.
- *
  * Управляет процессом ввода и подтверждения нового PIN-кода,
- * а также интеграцией с биометрической аутентификацией.
+ * а также интегра3цией с биометрической аутентификацией.
  *
  * @property context Контекст приложения для доступа к ресурсам.
  * @property updatePinUseCase UseCase для обновления PIN-кода в профиле.
  * @property animateDotsUseCase UseCase для анимации точек PIN.
  * @property fingerprintAuthenticator Менеджер биометрической аутентификации.
+ * @property verifyPINUseCase UseCase для проверки PIN-кода.
+ * @property settingsManager Менеджер настроек приложения.
  */
 @HiltViewModel
 internal class AuthSignUpActivityViewModel @Inject constructor(

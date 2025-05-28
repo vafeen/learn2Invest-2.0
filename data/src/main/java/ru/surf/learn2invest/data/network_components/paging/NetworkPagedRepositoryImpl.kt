@@ -5,7 +5,7 @@ import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import kotlinx.coroutines.flow.Flow
 import ru.surf.learn2invest.domain.domain_models.CoinReview
-import ru.surf.learn2invest.domain.network.MyPagerConfig
+import ru.surf.learn2invest.domain.domain_models.MyPagerConfig
 import ru.surf.learn2invest.domain.network.NetworkPagedRepository
 import ru.surf.learn2invest.domain.network.NetworkRepository
 import ru.surf.learn2invest.domain.network.ResponseResult

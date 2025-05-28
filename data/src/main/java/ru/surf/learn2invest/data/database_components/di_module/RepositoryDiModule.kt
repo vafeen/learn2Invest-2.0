@@ -22,7 +22,7 @@ import ru.surf.learn2invest.domain.database.repository.TransactionRepository
 
 @Module
 @InstallIn(ActivityRetainedComponent::class, ViewModelComponent::class)
-class RepositoryDiModule {
+internal class RepositoryDiModule {
     @Provides
     internal fun provideAssetBalanceHistoryRepository(
         dao: AssetBalanceHistoryDao,

@@ -20,10 +20,12 @@ import ru.surf.learn2invest.presentation.ui.components.screens.sign_up.SignUpAct
 import javax.inject.Inject
 
 /**
- * ViewModel для экрана главной активности. Управляет данными профиля пользователя и анимациями.
+ * ViewModel для главного экрана приложения.
+ * Управляет данными профиля, анимациями и навигацией.
  *
- * @param settingsManager Менеджер профиля, предоставляющий данные профиля и возможности для обновления профиля.
- * @param animateAlphaUseCase Используется для анимации изменения прозрачности (alpha) у вида.
+ * @property settingsManager Менеджер для работы с настройками и профилем пользователя
+ * @property animateAlphaUseCase UseCase для анимации изменения прозрачности элементов
+ * @property context Контекст приложения для доступа к ресурсам
  */
 @HiltViewModel
 internal class MainActivityViewModel @Inject constructor(
@@ -32,8 +34,15 @@ internal class MainActivityViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
 ) : ViewModel() {
     private val _effects = MutableSharedFlow<MainActivityEffect>()
+
+    /** Поток для обработки UI-эффектов (навигация, завершение активности) */
     val effects = _effects.asSharedFlow()
 
+    /**
+     * Обрабатывает входящие Intent-ы от активности.
+     *
+     * @param intent Входящий Intent для обработки. Поддерживается только [MainActivityIntent.ProcessSplash]
+     */
     fun handleIntent(intent: MainActivityIntent) {
         viewModelScope.launchIO {
             when (intent) {
@@ -43,10 +52,18 @@ internal class MainActivityViewModel @Inject constructor(
     }
 
     /**
-     * Поток, содержащий данные профиля пользователя.
-     * Используется для наблюдения за изменениями профиля в UI.
+     * Обрабатывает логику отображения splash-экрана.
+     *
+     * @param textView TextView для отображения приветственного сообщения
+     *
+     * Логика:
+     * 1. Проверяет заполненность профиля
+     * 2. При валидном профиле:
+     *    - Анимирует появление приветствия
+     *    - Перенаправляет на экран авторизации
+     * 3. При невалидном профиле:
+     *    - Перенаправляет на экран регистрации после задержки
      */
-    private val profileFlow = settingsManager.settingsFlow
     private suspend fun processSplash(textView: TextView) {
         val profile = profileFlow.value
         if (profile.firstName != "undefined" &&
@@ -83,4 +100,6 @@ internal class MainActivityViewModel @Inject constructor(
         }
     }
 
+    /** Поток данных профиля пользователя */
+    private val profileFlow = settingsManager.settingsFlow
 }

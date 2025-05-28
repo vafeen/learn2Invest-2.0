@@ -3,7 +3,6 @@ package ru.surf.learn2invest.presentation.ui.components.screens.fragments.market
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.cachedIn
-import androidx.recyclerview.widget.RecyclerView.NO_POSITION
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -14,27 +13,29 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
-import ru.surf.learn2invest.domain.domain_models.CoinReview
-import ru.surf.learn2invest.domain.network.ResponseResult
 import ru.surf.learn2invest.domain.network.usecase.GetCoinReviewUseCase
 import ru.surf.learn2invest.domain.network.usecase.GetPagedMarketReviewSortedByChangePercent24hUseCase
 import ru.surf.learn2invest.domain.network.usecase.GetPagedMarketReviewSortedByMarketCapUseCase
 import ru.surf.learn2invest.domain.network.usecase.GetPagedMarketReviewSortedByPriceAscUseCase
 import ru.surf.learn2invest.domain.network.usecase.GetPagedMarketReviewSortedByPriceDescUseCase
 import ru.surf.learn2invest.domain.network.usecase.base.GetPagedMarketReviewUseCase
-import ru.surf.learn2invest.domain.toCoinReview
 import ru.surf.learn2invest.domain.utils.launchIO
 import javax.inject.Inject
 
 /**
- * ViewModel для экрана MarketReview, который управляет состоянием данных для отображения
- * информации о монетах и их фильтрации.
+ * ViewModel для экрана "Обзор рынка".
+ * Управляет:
+ * - Получением и пагинацией данных о криптовалютах
+ * - Сортировкой по различным параметрам (капитализация, цена, изменение цены)
+ * - Поиском по списку криптовалют
+ * - Автоматическим обновлением данных
+ * - Обработкой состояний загрузки и ошибок
  *
- * @property getMarkerReviewUseCase Используется для получения списка всех рыночных обзоров.
- * @property insertSearchedCoinUseCase Используется для добавления монет в список поисковых запросов.
- * @property getAllSearchedCoinUseCase Используется для получения всех ранее добавленных монет в поисковых запросах.
- * @property getCoinReviewUseCase Используется для получения подробной информации о конкретной монете.
- * @property clearSearchedCoinUseCase Используется для очистки списка поисковых запросов.
+ * @param getPagedMarketReviewSortedByMarketCapUseCase UseCase для получения данных, отсортированных по рыночной капитализации
+ * @param getPagedMarketReviewSortedByChangePercent24hUseCase UseCase для получения данных, отсортированных по изменению цены за 24 часа
+ * @param getPagedMarketReviewSortedByPriceAscUseCase UseCase для получения данных, отсортированных по цене (по возрастанию)
+ * @param getPagedMarketReviewSortedByPriceDescUseCase UseCase для получения данных, отсортированных по цене (по убыванию)
+ * @param getCoinReviewUseCase UseCase для получения детальной информации о криптовалюте
  */
 @HiltViewModel
 internal class MarketReviewFragmentViewModel @Inject constructor(
@@ -44,84 +45,45 @@ internal class MarketReviewFragmentViewModel @Inject constructor(
     private val getPagedMarketReviewSortedByPriceDescUseCase: GetPagedMarketReviewSortedByPriceDescUseCase,
     private val getCoinReviewUseCase: GetCoinReviewUseCase,
 ) : ViewModel() {
+
+    /**
+     * Текущее состояние экрана
+     */
     private val _state = MutableStateFlow(MarketReviewFragmentState())
     val state = _state.asStateFlow()
+
+    /**
+     * Поток для side-эффектов (единичных событий)
+     */
     private val _effects = MutableSharedFlow<MarketReviewFragmentEffect>()
     val effects = _effects.asSharedFlow()
 
-
     /**
-     * Индекс первого элемента, который должен быть обновлен при загрузке новых данных.
+     * Job для управления пагинацией данных
      */
-    private var firstUpdateElement = 0
-
-    /**
-     * Количество элементов, которые должны быть обновлены.
-     */
-    private var amountUpdateElement = 0
-
     private var pagedFlowJob: Job? = null
-    private fun changePagedFlowJob(
-        getPagedMarketReviewUseCase: GetPagedMarketReviewUseCase,
-        search: String = ""
-    ) {
-        pagedFlowJob?.cancel()
-        pagedFlowJob = viewModelScope.launchIO {
-            getPagedMarketReviewUseCase.invoke(
-                search = search,
-                pageSize = 20,
-                onStart = {
-                    _state.update { it.copy(isLoading = true) }
-                },
-                onEnd = {
-                    _state.update { it.copy(isLoading = false) }
-                }
-            ).cachedIn(viewModelScope).collectLatest { coins ->
-                _state.update { it.copy(pagingData = coins) }
-            }
-        }
-    }
 
+    /**
+     * Job для управления автоматическим обновлением данных
+     */
     private var realtimeUpdateJob: Job? = null
 
     init {
-        filterByMarketcap()
+        filterByMarketCap()
     }
 
+    /**
+     * Обрабатывает интенты (пользовательские действия)
+     * @param intent Действие, которое нужно обработать
+     */
     fun handleIntent(intent: MarketReviewFragmentIntent) {
         viewModelScope.launchIO {
             when (intent) {
-                MarketReviewFragmentIntent.FilterByMarketCap -> {
-                    filterByMarketcap()
-                }
-
-                MarketReviewFragmentIntent.FilterByPercent -> {
-                    filterByPercent()
-                }
-
-                MarketReviewFragmentIntent.FilterByPrice -> {
-                    filterByPrice()
-                }
-
-                is MarketReviewFragmentIntent.SetSearchState -> {
-                    _state.update {
-                        val copy = it.copy(isSearch = intent.isSearch)
-                        if (!intent.isSearch) {
-                            copy.copy(searchRequest = "")
-                        } else copy
-                    }
-                }
-
-                is MarketReviewFragmentIntent.UpdateData -> {
-                    updateData(intent.firstElement, intent.lastElement)
-                }
-
-                is MarketReviewFragmentIntent.UpdateSearchRequest -> {
-                    updateSearchRequest(intent.searchRequest)
-                    updateCurrentFlowWithSearchRequest(intent.searchRequest)
-                }
-
-
+                MarketReviewFragmentIntent.FilterByMarketCap -> filterByMarketCap()
+                MarketReviewFragmentIntent.FilterByPercent -> filterByPercent()
+                MarketReviewFragmentIntent.FilterByPrice -> filterByPrice()
+                is MarketReviewFragmentIntent.SetSearchState -> handleSearchState(intent.isSearch)
+                is MarketReviewFragmentIntent.UpdateSearchRequest -> handleSearchRequest(intent.searchRequest)
                 MarketReviewFragmentIntent.StartRealtimeUpdate -> startRealtimeUpdate()
                 MarketReviewFragmentIntent.StopRealtimeUpdate -> stopRealtimeUpdate()
                 is MarketReviewFragmentIntent.SetErrorState -> setErrorState(intent.isError)
@@ -129,11 +91,17 @@ internal class MarketReviewFragmentViewModel @Inject constructor(
         }
     }
 
-
+    /**
+     * Устанавливает состояние ошибки
+     * @param isError Флаг наличия ошибки
+     */
     private fun setErrorState(isError: Boolean) {
         _state.update { it.copy(isError = isError) }
     }
 
+    /**
+     * Запускает автоматическое обновление данных каждые 20 секунд
+     */
     private fun startRealtimeUpdate() {
         realtimeUpdateJob = viewModelScope.launchIO {
             while (isActive) {
@@ -143,201 +111,134 @@ internal class MarketReviewFragmentViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Останавливает автоматическое обновление данных
+     */
     private fun stopRealtimeUpdate() {
         realtimeUpdateJob?.cancel()
         realtimeUpdateJob = null
     }
 
     /**
-     * Инициализирует данные, выполняет загрузку рыночных обзоров.
-     */
-    private suspend fun initData() {
-//        when (val result = getMarkerReviewUseCase(1, 10)) {
-//            is ResponseResult.Success -> {
-//                _state.update {
-//                    it.copy(
-//                        isLoading = false,
-//                        isError = false,
-//                        data = result.value.toMutableList().filter {
-//                            it.marketCapUsd > 0f && it.priceUsd > 0.1f
-//                        }.sortedByDescending { it.marketCapUsd }
-//                    )
-//                }
-//            }
-//
-//            is ResponseResult.Error -> {
-//                _state.update {
-//                    it.copy(
-//                        isLoading = false,
-//                        isError = true,
-//                    )
-//                }
-//            }
-//        }
-    }
-
-    /**
-     * Инициализация данных, выполняется при создании ViewModel.
-     * Получает рыночные обзоры и обновляет состояние данных.
-     */
-    init {
-        viewModelScope.launchIO {
-            initData()
-        }
-    }
-
-    /**
-     * Активирует состояние фильтра для выбранного элемента.
-     *
-     * @param filterState Идентификатор фильтра.
+     * Активирует указанный фильтр
+     * @param filterState Тип фильтра для активации
      */
     private fun activateFilterState(filterState: FilterState) {
-        _state.update {
-            it.copy(
-                filterState = filterState,
-//                filterByAsc = if (filterState != FilterState.FILTER_BY_PRICE) true else it.filterByAsc
-            )
-        }
+        _state.update { it.copy(filterState = filterState) }
     }
 
     /**
-     * Сортирует данные по рыночной капитализации.
+     * Устанавливает сортировку по рыночной капитализации
      */
-    private fun filterByMarketcap() {
+    private fun filterByMarketCap() {
         activateFilterState(FilterState.FILTER_BY_MARKETCAP)
         changePagedFlowJob(getPagedMarketReviewSortedByMarketCapUseCase)
-
-//        _state.update {
-//            it.copy(data = it.data.sortedByDescending { element -> element.marketCapUsd })
-//        }
     }
 
-    private fun updateCurrentFlowWithSearchRequest(searchResuest: String) {
+    /**
+     * Обновляет текущий поток данных с учетом поискового запроса
+     * @param searchRequest Текст поискового запроса
+     */
+    private fun updateCurrentFlowWithSearchRequest(searchRequest: String) {
         val state = _state.value
         when (state.filterState) {
             FilterState.FILTER_BY_MARKETCAP -> changePagedFlowJob(
                 getPagedMarketReviewUseCase = getPagedMarketReviewSortedByMarketCapUseCase,
-                search = searchResuest
+                search = searchRequest
             )
-
             FilterState.FILTER_BY_PERCENT -> changePagedFlowJob(
                 getPagedMarketReviewUseCase = getPagedMarketReviewSortedByChangePercent24hUseCase,
-                search = searchResuest
+                search = searchRequest
             )
-
             FilterState.FILTER_BY_PRICE -> changePagedFlowJob(
-                getPagedMarketReviewUseCase = if (state.filterByAsc) getPagedMarketReviewSortedByPriceAscUseCase else getPagedMarketReviewSortedByPriceDescUseCase,
-                search = searchResuest
+                getPagedMarketReviewUseCase = if (state.filterByAsc)
+                    getPagedMarketReviewSortedByPriceAscUseCase
+                else
+                    getPagedMarketReviewSortedByPriceDescUseCase,
+                search = searchRequest
             )
         }
     }
 
     /**
-     * Сортирует данные по процентному изменению за 24 часа.
+     * Устанавливает сортировку по изменению цены за 24 часа
      */
     private fun filterByPercent() {
         activateFilterState(FilterState.FILTER_BY_PERCENT)
         changePagedFlowJob(getPagedMarketReviewSortedByChangePercent24hUseCase)
-//        _state.update {
-//            it.copy(data = it.data.sortedByDescending { element -> element.changePercent24Hr })
-//        }
     }
 
     /**
-     * Сортирует данные по цене.
+     * Устанавливает сортировку по цене (переключает между возрастанием/убыванием)
      */
     private fun filterByPrice() {
         val state = _state.value
         if (state.filterState == FilterState.FILTER_BY_PRICE) {
-            if (!state.filterByAsc) {
-                _state.update {
-                    it.copy(filterByAsc = true)
-                }
-                changePagedFlowJob(getPagedMarketReviewSortedByPriceAscUseCase)
-            } else {
-                _state.update {
-                    it.copy(filterByAsc = false)
-                }
-                changePagedFlowJob(getPagedMarketReviewSortedByPriceDescUseCase)
-            }
+            _state.update { it.copy(filterByAsc = !state.filterByAsc) }
+            changePagedFlowJob(
+                if (state.filterByAsc)
+                    getPagedMarketReviewSortedByPriceDescUseCase
+                else
+                    getPagedMarketReviewSortedByPriceAscUseCase
+            )
         } else {
             activateFilterState(FilterState.FILTER_BY_PRICE)
-            if (state.filterByAsc) {
-                changePagedFlowJob(getPagedMarketReviewSortedByPriceAscUseCase)
-            } else {
-                changePagedFlowJob(getPagedMarketReviewSortedByPriceDescUseCase)
-            }
+            changePagedFlowJob(
+                if (state.filterByAsc)
+                    getPagedMarketReviewSortedByPriceAscUseCase
+                else
+                    getPagedMarketReviewSortedByPriceDescUseCase
+            )
         }
     }
 
     /**
-     * Устанавливает состояние поиска и обновляет данные с учетом поискового запроса.
-     * @param searchRequest Строка поискового запроса.
+     * Обрабатывает изменение состояния поиска
+     * @param isSearch Флаг активности поиска
+     */
+    private fun handleSearchState(isSearch: Boolean) {
+        _state.update {
+            val newState = it.copy(isSearch = isSearch)
+            if (!isSearch) newState.copy(searchRequest = "") else newState
+        }
+    }
+
+    /**
+     * Обрабатывает поисковый запрос
+     * @param searchRequest Текст поискового запроса
+     */
+    private fun handleSearchRequest(searchRequest: String) {
+        updateSearchRequest(searchRequest)
+        updateCurrentFlowWithSearchRequest(searchRequest)
+    }
+
+    /**
+     * Обновляет поисковый запрос в состоянии
+     * @param searchRequest Текст поискового запроса
      */
     private fun updateSearchRequest(searchRequest: String = "") {
-        _state.update {
-            it.copy(
-                searchRequest = searchRequest,
-                dataBySearchRequest = if (searchRequest.isNotEmpty()) {
-                    it.data.filter { element ->
-                        searchRequest in element.name ||
-                                searchRequest in element.symbol ||
-                                searchRequest in element.id
-                    }
-                } else {
-                    listOf()
-                })
-
-        }
+        _state.update { it.copy(searchRequest = searchRequest) }
     }
 
     /**
-     * Обновляет данные для отображения в указанном диапазоне элементов.
-     *
-     * @param firstElement Индекс первого элемента.
-     * @param lastElement Индекс последнего элемента.
+     * Изменяет текущий поток пагинации
+     * @param getPagedMarketReviewUseCase UseCase для получения данных
+     * @param search Поисковый запрос (необязательный)
      */
-    private suspend fun updateData(firstElement: Int, lastElement: Int) {
-        val tempUpdate = mutableListOf<CoinReview>()
-        val state = state.value
-        val updateDestinationLink = if (state.isSearch) state.searchedData else state.data
-        if (updateDestinationLink.isNotEmpty()
-            && firstElement != NO_POSITION
-            && updateDestinationLink.size > lastElement
-        ) {
-            firstUpdateElement = firstElement
-            amountUpdateElement = lastElement - firstElement + 1
-            for (index in firstElement..lastElement) {
-                when (val result =
-                    getCoinReviewUseCase.invoke(updateDestinationLink[index].id)) {
-                    is ResponseResult.Success -> {
-                        tempUpdate.add(result.value.toCoinReview())
-                    }
-
-                    is ResponseResult.Error -> _state.update {
-                        it.copy(isError = true)
-                    }
-                }
+    private fun changePagedFlowJob(
+        getPagedMarketReviewUseCase: GetPagedMarketReviewUseCase,
+        search: String = ""
+    ) {
+        pagedFlowJob?.cancel()
+        pagedFlowJob = viewModelScope.launchIO {
+            getPagedMarketReviewUseCase.invoke(
+                search = search,
+                pageSize = 20,
+                onStart = { _state.update { it.copy(isLoading = true) } },
+                onEnd = { _state.update { it.copy(isLoading = false) } }
+            ).cachedIn(viewModelScope).collectLatest { coins ->
+                _state.update { it.copy(pagingData = coins) }
             }
-            val tempUpdateId = tempUpdate.map { it.id }
-
-            _state.update {
-                if (state.isSearch) {
-                    it.copy(searchedData = it.searchedData.mapNotNull { element ->
-                        if (tempUpdateId.contains(element.id)) tempUpdate.find { updateElement ->
-                            updateElement.id == element.id
-                        }
-                        else element
-                    })
-                } else {
-                    it.copy(data = it.data.mapNotNull { element ->
-                        if (tempUpdateId.contains(element.id)) tempUpdate.find { updateElement ->
-                            updateElement.id == element.id
-                        }
-                        else element
-                    })
-                }
-            }
-        } else initData()
+        }
     }
 }

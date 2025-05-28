@@ -9,8 +9,6 @@ internal sealed class MarketReviewFragmentIntent {
 
     data class UpdateSearchRequest(val searchRequest: String) : MarketReviewFragmentIntent()
 
-    data class UpdateData(val firstElement: Int, val lastElement: Int) :
-        MarketReviewFragmentIntent()
 
     data object StartRealtimeUpdate : MarketReviewFragmentIntent()
     data object StopRealtimeUpdate : MarketReviewFragmentIntent()

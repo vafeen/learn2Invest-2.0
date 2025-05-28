@@ -20,24 +20,22 @@ import java.text.NumberFormat
 import java.util.Locale
 import javax.inject.Inject
 
+/**
+ * Адаптер для отображения списка криптовалют с пагинацией.
+ * Обрабатывает:
+ * - Загрузку и отображение данных о криптовалютах
+ * - Подгрузку иконок криптовалют
+ * - Обработку кликов по элементам списка
+ *
+ * @param loadCoinIconUseCase UseCase для загрузки иконок криптовалют
+ * @param context Контекст активности (передается через Hilt)
+ */
 internal class MarketReviewPagingAdapter @Inject constructor(
     private val loadCoinIconUseCase: LoadCoinIconUseCase,
     @ActivityContext private val context: Context
-) :
-    PagingDataAdapter<CoinReview, MarketReviewPagingAdapter.ViewHolder>(
-        MarketReviewPagingCallback()
-    ) {
-//    /**
-//     * Данные, которые отображаются в адаптере.
-//     */
-//    var data: List<CoinReview> = listOf()
-//        set(value) {
-//            val oldList = field
-//            val diffCallback = MarketReviewAdapterDiffCallback(oldList, value)
-//            val diffs = DiffUtil.calculateDiff(diffCallback)
-//            field = value
-//            diffs.dispatchUpdatesTo(this)
-//        }
+) : PagingDataAdapter<CoinReview, MarketReviewPagingAdapter.ViewHolder>(
+    MarketReviewPagingCallback()
+) {
 
     override fun onCreateViewHolder(
         parent: ViewGroup,
@@ -49,32 +47,33 @@ internal class MarketReviewPagingAdapter @Inject constructor(
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         getItem(position)?.let { coin ->
-            holder.apply {
-                // Отображение имени монеты с переносом строки, если оно слишком длинное
+            with(holder) {
+                // Отображение названия с переносом строки при необходимости
                 coinTopTextInfo.text = if (coin.name.length > 10)
                     StringBuilder(coin.name).insert(10, '\n')
                 else
                     coin.name
+
                 coinBottomTextInfo.text = coin.symbol
 
-                // Отображение цены монеты с учетом валюты
+                // Форматирование цены с валютой
                 coinTopNumericInfo.text =
                     NumberFormat.getInstance(Locale.US).apply {
                         maximumFractionDigits = 4
                     }.format(coin.priceUsd).getWithCurrency()
 
-                // Установка цвета текста в зависимости от процента изменения цены
-                if (coin.changePercent24Hr >= 0) {
-                    coinBottomNumericInfo.setTextColor(coinBottomNumericInfo.context.getColor(R.color.increase))
-                } else {
-                    coinBottomNumericInfo.setTextColor(coinBottomNumericInfo.context.getColor(R.color.recession))
-                }
+                // Установка цвета в зависимости от изменения цены
+                val colorRes = if (coin.changePercent24Hr >= 0)
+                    R.color.increase
+                else
+                    R.color.recession
+                coinBottomNumericInfo.setTextColor(context.getColor(colorRes))
                 coinBottomNumericInfo.text = "${coin.changePercent24Hr.round()}%"
 
-                // Загрузка иконки монеты
+                // Загрузка иконки
                 loadCoinIconUseCase.invoke(coinIcon, coin.symbol)
 
-                // Обработка клика по элементу списка
+                // Обработка клика
                 itemView.setOnClickListener {
                     context.startActivity(
                         AssetReviewActivity.newIntent(
@@ -87,19 +86,23 @@ internal class MarketReviewPagingAdapter @Inject constructor(
                 }
             }
         }
-
     }
 
     /**
-     * ViewHolder для отображения каждой строки в списке.
-     * @param itemView представление элемента в RecyclerView.
+     * ViewHolder для элемента списка криптовалют.
+     * Содержит ссылки на все View элементы макета.
+     *
+     * @property coinIcon ImageView для иконки криптовалюты
+     * @property coinTopTextInfo TextView для названия криптовалюты
+     * @property coinBottomTextInfo TextView для символа криптовалюты
+     * @property coinTopNumericInfo TextView для цены криптовалюты
+     * @property coinBottomNumericInfo TextView для изменения цены (в процентах)
      */
     class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        val coinIcon = itemView.findViewById<ImageView>(R.id.coin_icon)
-        val coinTopTextInfo = itemView.findViewById<TextView>(R.id.coin_name)
-        val coinBottomTextInfo = itemView.findViewById<TextView>(R.id.coin_symbol)
-        val coinTopNumericInfo = itemView.findViewById<TextView>(R.id.coin_top_numeric_info)
-        val coinBottomNumericInfo = itemView.findViewById<TextView>(R.id.coin_bottom_numeric_info)
+        val coinIcon: ImageView = itemView.findViewById(R.id.coin_icon)
+        val coinTopTextInfo: TextView = itemView.findViewById(R.id.coin_name)
+        val coinBottomTextInfo: TextView = itemView.findViewById(R.id.coin_symbol)
+        val coinTopNumericInfo: TextView = itemView.findViewById(R.id.coin_top_numeric_info)
+        val coinBottomNumericInfo: TextView = itemView.findViewById(R.id.coin_bottom_numeric_info)
     }
-
 }

@@ -11,7 +11,7 @@ import ru.surf.learn2invest.data.database_components.dao.TransactionDao
 
 @Module
 @InstallIn(ActivityRetainedComponent::class)
-class DaoDiModule {
+internal class DaoDiModule {
 
     @Provides
     internal fun assetBalanceHistoryDao(db: L2IDatabase): AssetBalanceHistoryDao =

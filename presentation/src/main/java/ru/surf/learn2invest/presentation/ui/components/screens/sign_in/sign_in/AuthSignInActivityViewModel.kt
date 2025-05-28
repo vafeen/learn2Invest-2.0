@@ -22,8 +22,8 @@ import javax.inject.Inject
  * Обрабатывает ввод PIN-кода, проверяет корректность и анимирует точки ввода.
  * При успешной проверке инициирует переход на главный экран.
  *
- * @property context Контекст приложения для доступа к ресурсам.
- * @property animateDotsUseCase UseCase для анимации точек PIN.
+ * @property context Контекст приложения для доступа к ресурсам
+ * @property animateDotsUseCase UseCase для анимации точек PIN
  */
 @HiltViewModel
 internal class AuthSignInActivityViewModel @Inject constructor(

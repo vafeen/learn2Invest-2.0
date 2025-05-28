@@ -14,15 +14,26 @@ import ru.surf.learn2invest.domain.network.ResponseResult
 import javax.inject.Inject
 
 /**
- * Репозиторий для получения данных с API
+ * Репозиторий для получения данных из API.
+ *
+ * @param coinAPIService Сервис для взаимодействия с Coin API.
+ * @param augmentedCoinReviewConverter Конвертер для [AugmentedCoinReview].
+ * @param coinPriceConverter Конвертер для [CoinPrice].
+ * @param coinReviewConverter Конвертер для [CoinReview].
  */
-
 internal class NetworkRepositoryImpl @Inject constructor(
     private val coinAPIService: CoinAPIService,
     private val augmentedCoinReviewConverter: AugmentedCoinReviewConverter,
     private val coinPriceConverter: CoinPriceConverter,
     private val coinReviewConverter: CoinReviewConverter,
 ) : NetworkRepository {
+
+    /**
+     * Получает детальный обзор криптовалюты по ID.
+     *
+     * @param id ID криптовалюты.
+     * @return [ResponseResult] с [AugmentedCoinReview] или ошибкой.
+     */
     override suspend fun getCoinReview(id: String): ResponseResult<AugmentedCoinReview> =
         try {
             val response = coinAPIService.getCoinReview(
@@ -33,6 +44,12 @@ internal class NetworkRepositoryImpl @Inject constructor(
             ResponseResult.Error(e)
         }
 
+    /**
+     * Получает историю цен криптовалюты по ID.
+     *
+     * @param id ID криптовалюты.
+     * @return [ResponseResult] со списком [CoinPrice] или ошибкой.
+     */
     override suspend fun getCoinHistory(id: String): ResponseResult<List<CoinPrice>> =
         try {
             val response = coinAPIService.getCoinHistory(
@@ -46,6 +63,15 @@ internal class NetworkRepositoryImpl @Inject constructor(
             ResponseResult.Error(e)
         }
 
+    /**
+     * Получает список обзоров рынка криптовалют с пагинацией и сортировкой.
+     *
+     * @param search Строка поиска.
+     * @param sortBy Параметр сортировки.
+     * @param pageNumber Номер страницы.
+     * @param pageSize Размер страницы.
+     * @return [ResponseResult] со списком [CoinReview] или ошибкой.
+     */
     override suspend fun getMarketReview(
         search: String,
         sortBy: NetworkPagedRepository.Companion.SortBy,
@@ -74,5 +100,3 @@ internal class NetworkRepositoryImpl @Inject constructor(
             ResponseResult.Error(e)
         }
 }
-
-

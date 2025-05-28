@@ -6,7 +6,7 @@ import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import ru.surf.learn2invest.domain.domain_models.CoinReview
-import ru.surf.learn2invest.domain.network.MyPagerConfig
+import ru.surf.learn2invest.domain.domain_models.MyPagerConfig
 import ru.surf.learn2invest.domain.network.NetworkPagedRepository
 import ru.surf.learn2invest.domain.network.ResponseResult
 
