@@ -6,6 +6,7 @@ import ru.surf.learn2invest.presentation.ui.components.screens.trading_password.
 import ru.surf.learn2invest.presentation.ui.components.screens.trading_password.common.TradingPasswordActivityState
 import ru.surf.learn2invest.presentation.ui.components.screens.trading_password.common.TradingPasswordActivityViewModel
 import ru.surf.learn2invest.presentation.ui.components.screens.trading_password.create.TradingPasswordChangeActivityViewModel
+import ru.surf.learn2invest.presentation.utils.viewModelCreator
 import javax.inject.Inject
 
 /**
@@ -18,7 +19,7 @@ internal class TradingPasswordChangeActivity : TradingPasswordActivity() {
     @Inject
     lateinit var factory: TradingPasswordChangeActivityViewModel.Factory
 
-    override val viewModel: TradingPasswordActivityViewModel by lazy {
+    override val viewModel: TradingPasswordActivityViewModel by viewModelCreator {
         factory.create(
             TradingPasswordActivityState(
                 mainText = this.getString(R.string.change_trpas),
