@@ -6,7 +6,7 @@ internal sealed class AuthActivityEffect {
     data object NavigateToMainScreen : AuthActivityEffect()
     data object Finish : AuthActivityEffect()
     data class ChangeEnabledKeyboardState(val isEnabled: Boolean) : AuthActivityEffect()
-    data class AnimatePinDots(val animate: (ImageView, ImageView, ImageView, ImageView) -> Unit) :
+    data class AnimatePinDots(val animate: suspend (ImageView, ImageView, ImageView, ImageView) -> Unit) :
         AuthActivityEffect()
 
     data class FingerPrintBottomSheet(

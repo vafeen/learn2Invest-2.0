@@ -69,23 +69,22 @@ internal class AuthChangingPinActivityViewModel @Inject constructor(
                         dot3,
                         dot4,
                         needReturn = true,
-                        truePIN = truth,
-                        onEnd = {
-                            viewModelScope.launchIO {
-                                if (truth) {
-                                    _state.update {
-                                        it.copy(mainText = context.getString(R.string.enter_new_pin))
-                                    }
-                                }
-                                _state.update {
-                                    it.copy(
-                                        pin = "",
-                                        dots = allWhiteDots()
-                                    )
-                                }
-                                unblockKeyBoard()
+                        truePIN = truth
+                    )
+                    viewModelScope.launchIO {
+                        if (truth) {
+                            _state.update {
+                                it.copy(mainText = context.getString(R.string.enter_new_pin))
                             }
-                        })
+                        }
+                        _state.update {
+                            it.copy(
+                                pin = "",
+                                dots = allWhiteDots()
+                            )
+                        }
+                        unblockKeyBoard()
+                    }
                 })
             }
 
@@ -116,17 +115,16 @@ internal class AuthChangingPinActivityViewModel @Inject constructor(
                         dot3,
                         dot4,
                         needReturn = !truth,
-                        truePIN = truth,
-                        onEnd = {
-                            viewModelScope.launchIO {
-                                if (truth) {
-                                    _effects.emit(AuthActivityEffect.Finish)
-                                } else {
-                                    _state.update { it.copy(pin = "", dots = allWhiteDots()) }
-                                    unblockKeyBoard()
-                                }
-                            }
-                        })
+                        truePIN = truth
+                    )
+                    viewModelScope.launchIO {
+                        if (truth) {
+                            _effects.emit(AuthActivityEffect.Finish)
+                        } else {
+                            _state.update { it.copy(pin = "", dots = allWhiteDots()) }
+                            unblockKeyBoard()
+                        }
+                    }
                 })
 
             }

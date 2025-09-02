@@ -12,6 +12,7 @@ import ru.surf.learn2invest.domain.cryptography.usecase.UpdatePinUseCase
 import ru.surf.learn2invest.domain.cryptography.usecase.VerifyPINUseCase
 import ru.surf.learn2invest.domain.services.settings_manager.SettingsManager
 import ru.surf.learn2invest.domain.utils.launchIO
+import ru.surf.learn2invest.domain.utils.withContextIO
 import ru.surf.learn2invest.presentation.R
 import ru.surf.learn2invest.presentation.ui.components.screens.sign_in.common.AuthActivityEffect
 import ru.surf.learn2invest.presentation.ui.components.screens.sign_in.common.AuthActivityState
@@ -83,40 +84,39 @@ internal class AuthSignUpActivityViewModel @Inject constructor(
                         dot3,
                         dot4,
                         needReturn = false,
-                        truePIN = true,
-                        onEnd = {
-                            viewModelScope.launchIO {
-                                if (fingerprintAuthenticator.isBiometricAvailable()) {
-                                    _effects.emit(
-                                        AuthActivityEffect.FingerPrintBottomSheet(
-                                            onSuccess = {
-                                                viewModelScope.launchIO {
-                                                    settingsManager.update {
-                                                        it.copy(biometry = true)
-                                                    }
-                                                    _effects.emit(AuthActivityEffect.NavigateToMainScreen)
-                                                    _effects.emit(AuthActivityEffect.Finish)
-                                                }
-                                            },
-                                            onCancel = {
-                                                viewModelScope.launchIO {
-                                                    settingsManager.update {
-                                                        it.copy(biometry = false)
-                                                    }
-                                                    _effects.emit(AuthActivityEffect.NavigateToMainScreen)
-                                                    _effects.emit(AuthActivityEffect.Finish)
-                                                }
-                                            })
-                                    )
-                                } else {
-                                    settingsManager.update {
-                                        it.copy(biometry = false)
-                                    }
-                                    _effects.emit(AuthActivityEffect.NavigateToMainScreen)
-                                    _effects.emit(AuthActivityEffect.Finish)
-                                }
+                        truePIN = true
+                    )
+                    withContextIO {
+                        if (fingerprintAuthenticator.isBiometricAvailable()) {
+                            _effects.emit(
+                                AuthActivityEffect.FingerPrintBottomSheet(
+                                    onSuccess = {
+                                        viewModelScope.launchIO {
+                                            settingsManager.update {
+                                                it.copy(biometry = true)
+                                            }
+                                            _effects.emit(AuthActivityEffect.NavigateToMainScreen)
+                                            _effects.emit(AuthActivityEffect.Finish)
+                                        }
+                                    },
+                                    onCancel = {
+                                        viewModelScope.launchIO {
+                                            settingsManager.update {
+                                                it.copy(biometry = false)
+                                            }
+                                            _effects.emit(AuthActivityEffect.NavigateToMainScreen)
+                                            _effects.emit(AuthActivityEffect.Finish)
+                                        }
+                                    })
+                            )
+                        } else {
+                            settingsManager.update {
+                                it.copy(biometry = false)
                             }
-                        })
+                            _effects.emit(AuthActivityEffect.NavigateToMainScreen)
+                            _effects.emit(AuthActivityEffect.Finish)
+                        }
+                    }
                 })
             }
 
@@ -128,13 +128,12 @@ internal class AuthSignUpActivityViewModel @Inject constructor(
                         dot3,
                         dot4,
                         needReturn = true,
-                        truePIN = false,
-                        onEnd = {
-                            viewModelScope.launchIO {
-                                _state.update { it.copy(pin = "", dots = allWhiteDots()) }
-                                unblockKeyBoard()
-                            }
-                        })
+                        truePIN = false
+                    )
+                    withContextIO {
+                        _state.update { it.copy(pin = "", dots = allWhiteDots()) }
+                        unblockKeyBoard()
+                    }
                 })
             }
         }

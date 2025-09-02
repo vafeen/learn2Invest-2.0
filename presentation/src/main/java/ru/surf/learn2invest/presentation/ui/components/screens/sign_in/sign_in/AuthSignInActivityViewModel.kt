@@ -10,6 +10,7 @@ import ru.surf.learn2invest.domain.animator.usecase.AnimateDotsUseCase
 import ru.surf.learn2invest.domain.cryptography.usecase.VerifyPINUseCase
 import ru.surf.learn2invest.domain.services.settings_manager.SettingsManager
 import ru.surf.learn2invest.domain.utils.launchIO
+import ru.surf.learn2invest.domain.utils.withContextIO
 import ru.surf.learn2invest.presentation.R
 import ru.surf.learn2invest.presentation.ui.components.screens.sign_in.common.AuthActivityEffect
 import ru.surf.learn2invest.presentation.ui.components.screens.sign_in.common.AuthActivityState
@@ -56,22 +57,26 @@ internal class AuthSignInActivityViewModel @Inject constructor(
             _effects.emit(AuthActivityEffect.AnimatePinDots { dot1, dot2, dot3, dot4 ->
                 animateDotsUseCase.invoke(
                     dot1, dot2, dot3, dot4, needReturn = false, truePIN = true
-                ) {
-                    viewModelScope.launchIO {
-                        _effects.emit(AuthActivityEffect.NavigateToMainScreen)
-                        _effects.emit(AuthActivityEffect.Finish)
-                    }
+                )
+                withContextIO {
+                    _effects.emit(AuthActivityEffect.NavigateToMainScreen)
+                    _effects.emit(AuthActivityEffect.Finish)
                 }
             })
         } else {
             _effects.emit(AuthActivityEffect.AnimatePinDots { dot1, dot2, dot3, dot4 ->
                 animateDotsUseCase.invoke(
-                    dot1, dot2, dot3, dot4, needReturn = true, truePIN = false, onEnd = {
-                        viewModelScope.launchIO {
-                            _state.update { it.copy(pin = "", dots = allWhiteDots()) }
-                            unblockKeyBoard()
-                        }
-                    })
+                    dot1,
+                    dot2,
+                    dot3,
+                    dot4,
+                    needReturn = true,
+                    truePIN = false
+                )
+                withContextIO {
+                    _state.update { it.copy(pin = "", dots = allWhiteDots()) }
+                    unblockKeyBoard()
+                }
             })
         }
     }

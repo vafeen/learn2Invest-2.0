@@ -58,13 +58,10 @@ internal abstract class AuthActivityViewModel(
                 _effects.emit(AuthActivityEffect.AnimatePinDots { dot1, dot2, dot3, dot4 ->
                     animateDotsUseCase.invoke(
                         dot1, dot2, dot3, dot4, needReturn = false, truePIN = true
-                    ) {
-                        viewModelScope.launchIO {
-                            _effects.emit(AuthActivityEffect.NavigateToMainScreen)
-                            _effects.emit(AuthActivityEffect.Finish)
-                        }
-                    }
+                    )
                 })
+                _effects.emit(AuthActivityEffect.NavigateToMainScreen)
+                _effects.emit(AuthActivityEffect.Finish)
             }
         }))
     }
